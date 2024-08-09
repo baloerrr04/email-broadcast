@@ -1,0 +1,72 @@
+<%- include('partials/header') -%>
+
+<div class="container p-4 d-flex align-items-center justify-content-center min-vh-100">
+  <div class="card border-none">
+    <div class="card-body d-flex flex-column justify-content-center align-items-center">
+      <form class="row g-3" action="/api/emails/<%= email.id %>/edit" method="POST" id="emailForm">
+        <div class="col-md-4">
+          <input type="hidden" id="userId" name="userId" value="<%= user.id %>" required />
+          <div class="mb-3">
+            <label for="to" class="form-label">To:</label>
+            <input type="text" class="form-control" id="to" name="to" value="<%= email.to %>" required />
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label for="cc" class="form-label">CC:</label>
+            <input type="text" class="form-control" id="cc" name="cc" value="<%= email.cc %>" />
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label for="bcc" class="form-label">BCC:</label>
+            <input type="text" class="form-control" id="bcc" name="bcc" value="<%= email.bcc %>" />
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="subject" class="form-label">Subject:</label>
+          <input type="text" class="form-control" id="subject" name="subject" value="<%= email.subject %>" required />
+        </div>
+
+        <div class="mb-3">
+          <label for="content" class="form-label">Content:</label>
+          <textarea class="form-control" id="content" name="content" rows="4" required><%= email.content %></textarea>
+        </div>
+
+        <div id="scheduleContainer">
+          <% email.schedules.forEach(function(schedule, index) { %>
+          <div class="mb-3 schedule">
+            <label for="scheduleDate" class="form-label">Schedule Date:</label>
+            <input type="date" class="form-control" name="scheduleDate[]" value="<%= schedule.scheduleDate.toISOString().slice(0, 10) %>" required />
+            <label for="scheduleTime" class="form-label">Schedule Time:</label>
+            <input type="time" class="form-control" name="scheduleTime[]" value="<%= schedule.scheduleDate.toISOString().slice(11, 16) %>" required />
+          </div>
+          <% }); %>
+        </div>
+
+        <button type="button" class="btn btn-secondary btn-block" onclick="addSchedule()">Add Another Schedule</button>
+        <button type="submit" class="btn btn-primary btn-block">Update Email</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function addSchedule() {
+    const container = document.getElementById("scheduleContainer");
+    const scheduleDiv = document.createElement("div");
+    scheduleDiv.classList.add("mb-3", "schedule");
+    scheduleDiv.innerHTML = `
+      <label for="scheduleDate" class="form-label">Schedule Date:</label>
+      <input type="date" class="form-control" name="scheduleDate[]" required />
+      <label for="scheduleTime" class="form-label">Schedule Time:</label>
+      <input type="time" class="form-control" name="scheduleTime[]" required />
+    `;
+    container.appendChild(scheduleDiv);
+  }
+</script>
+
+<%- include('partials/footer') -%>

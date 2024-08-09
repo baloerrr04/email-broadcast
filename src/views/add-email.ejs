@@ -1,0 +1,92 @@
+<%- include('partials/header') -%>
+
+<div class="container p-4 d-flex align-items-center justify-content-center min-vh-100">
+  <div class="card border-none">
+    <div class="card-body d-flex flex-column justify-content-center align-items-center">
+      <form class="row g-3" action="/api/send-email" method="POST" id="emailForm">
+        <div class="col-md-4">
+          <input type="hidden" id="userId" name="userId" value="<%= user.id %>" required />
+          <div class="mb-3">
+            <label for="to" class="form-label">To:</label>
+            <input type="text" class="form-control" id="to" name="to" placeholder="Separate emails with commas" required />
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label for="cc" class="form-label">CC:</label>
+            <input type="text" class="form-control" id="cc" name="cc" placeholder="Separate emails with commas" />
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label for="bcc" class="form-label">BCC:</label>
+            <input type="text" class="form-control" id="bcc" name="bcc" placeholder="Separate emails with commas" />
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="subject" class="form-label">Subject:</label>
+          <input type="text" class="form-control" id="subject" name="subject" required />
+        </div>
+        <div class="mb-3">
+          <label for="content" class="form-label">Content:</label>
+          <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
+        </div>
+        <div class="col-md-6">
+            <div id="scheduleContainer"></div>
+        </div>
+        <button type="button" class="btn btn-secondary btn-block mt-2" onclick="addSchedule()">Add Schedule</button>
+        <button type="submit" class="btn btn-primary btn-block mt-3">Send Email</button>
+      </form>
+    </div>
+
+    <% if (!user.appPassword) { %>
+    <script>
+      window.location.href = "/input-app-password";
+    </script>
+    <% } %> 
+    
+    <% if(!user.id) { %>
+    <script>
+      window.location.href = "/login";
+    </script>
+    <% } %>
+  </div>
+</div>
+
+<script>
+  function addSchedule() {
+    const container = document.getElementById("scheduleContainer");
+    const scheduleDiv = document.createElement("div");
+    scheduleDiv.classList.add("mb-3", "schedule");
+    scheduleDiv.innerHTML = `
+      <label for="scheduleDate" class="form-label">Schedule Date:</label>
+      <input type="date" class="form-control scheduleDate" name="scheduleDate[]" required />
+      <label for="scheduleTime" class="form-label">Schedule Time:</label>
+      <input type="time" class="form-control scheduleTime" name="scheduleTime[]" required />
+      <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeSchedule(this)">Remove Schedule</button>
+    `;
+    container.appendChild(scheduleDiv);
+  }
+
+  function removeSchedule(button) {
+    button.closest('.schedule').remove();
+  }
+
+  async function sendAuthenticatedRequest(url) {
+    const response = await fetch(url, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json();
+    return data;
+  }
+
+  async function fetchData() {
+    const data = await sendAuthenticatedRequest("/api/send-email");
+    console.log(data);
+  }
+
+  fetchData();
+</script>
+
+<%- include('partials/footer') -%>
