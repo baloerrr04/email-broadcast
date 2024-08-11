@@ -87,34 +87,35 @@ class MailService {
         });
     }
 
-    async sendMail(from: string, to: string | string[], cc: string | string[], bcc: string | string[], subject: string, content: string): Promise<void> {
-        if (!this.transporter || !this.MailGenerator) throw new HttpException(500, "MailService is not configured");
-
+    async sendMail(
+        from: string,
+        to: string | string[],
+        cc: string | string[],
+        bcc: string | string[],
+        subject: string,
+        content: string,
+        attachments: any[] = []
+      ): Promise<void> {
+        if (!this.transporter || !this.MailGenerator)
+          throw new HttpException(500, "MailService is not configured");
+      
         const toArray = Array.isArray(to) ? to : [to];
         const ccArray = Array.isArray(cc) ? cc : [cc];
         const bccArray = Array.isArray(bcc) ? bcc : [bcc];
-
-        const response = {
-            body: {
-                name: "Recipient Name",
-                intro: content,
-                outro: "Looking forward to do more business"
-            }
-        };
-
-        const mail = this.MailGenerator.generate(response);
-
+        
+      
         const message = {
-            from: from,
-            to: toArray.join(','),
-            cc: ccArray.join(','),
-            bcc: bccArray.join(','),
-            subject: subject,
-            html: mail
+          from: from,
+          to: toArray.join(','),
+          cc: ccArray.join(','),
+          bcc: bccArray.join(','),
+          subject: subject,
+          html: content, // HTML content that may include <img src="cid:...">
+          attachments: attachments, // Array of attachments, including images
         };
-
+      
         await this.transporter.sendMail(message);
-    }
+      }
 
 }
 

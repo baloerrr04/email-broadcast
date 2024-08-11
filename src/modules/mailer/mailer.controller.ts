@@ -6,8 +6,8 @@ import cron from "node-cron";
 import { HttpException } from '../../common/exceptions/HttpExceptions';
 import { EmailData, EmailScheduleData } from '../../common/types/mailTypes';
 import MailRepository from './mailer.repository';
-import { User } from '../../common/types/userTypes';
-
+import * as Cheerio from 'cheerio';
+import axios from 'axios';
 
 class MailController {
     static async sendEmail(req: Request, res: Response) {
@@ -23,10 +23,87 @@ class MailController {
             const emailData: EmailData = { userId: user.id, to, cc, bcc, subject, content };
             const email = await MailRepository.addEmail(emailData);
 
+
+            const baseUrl = 'http://localhost:3000/';
+
+            // Fungsi untuk mengunduh gambar
+            const downloadImage = async (url: string, filename: string) => {
+                try {
+                    const response = await axios.get(url, { responseType: 'arraybuffer' });
+                    return {
+                        filename,
+                        content: Buffer.from(response.data),
+                        cid: `image${new Date().getTime()}.nodemailer`
+                    };
+                } catch (error) {
+                    console.error('Error downloading image:', url, error);
+                    throw error;
+                }
+            };
+
+            // Memproses konten
+            const $ = Cheerio.load(content);
+            const attachments: any[] = [];
+
+            // Map promises untuk proses gambar
+            const promises = $('img').map(async (index, img) => {
+                let src = $(img).attr('src');
+                console.log('Image src:', src);
+
+                if (src) {
+                    if (src.startsWith('data:')) {
+                        console.log("src1: ", src);
+
+                        // Tangani gambar base64
+                        const base64Data = src.split(';base64,').pop();
+                        if (base64Data) {
+                            const filename = `image${index}.png`;
+                            const cid = `image${index}@${new Date().getTime()}.nodemailer`;
+                            attachments.push({
+                                filename,
+                                content: Buffer.from(base64Data, 'base64'),
+                                cid
+                            });
+                            $(img).attr('src', `cid:${cid}`);
+                        }
+                    } else {
+                        // Tangani gambar dengan URL
+                        console.log("src2: ", src);
+                        
+                        // if (src.startsWith('/')) {
+                            src = baseUrl + src // Mengonversi jalur relatif menjadi URL absolut
+                        // }
+                        const filename = `image${index}.png`;
+                        try {
+                            console.log('Downloading image from:', src);
+                            const imageAttachment = await downloadImage(src, filename);
+                            attachments.push(imageAttachment);
+                            $(img).attr('src', `cid:${imageAttachment.cid}`);
+                        } catch (error) {
+                            console.error('Failed to download image:', src, error);
+                        }
+                    }
+                } else {
+                    console.error('Image src is missing');
+                }
+            }).get(); // Mengambil array dari promises
+
+            // Tunggu semua promises selesai
+            await Promise.all(promises);
+
+
+            console.log("attachments: ", attachments);
+
+            const updatedContent = $.html();
+
+            console.log("update content: ", updatedContent);
+
             if (!scheduleDate || scheduleDate.length === 0) {
-                await mailService.sendMail(user.email, to.split(','), cc?.split(',') || [], bcc?.split(',') || [], subject, content);
+                // Send email immediately
+                await mailService.sendMail(user.email, to.split(','), cc?.split(',') || [], bcc?.split(',') || [], subject, updatedContent, attachments);
                 console.log('Email sent immediately');
             } else {
+                // Schedule email
                 const schedules: Date[] = [];
                 const schedulesDB: Date[] = [];
                 for (let i = 0; i < scheduleDate.length; i++) {
@@ -38,7 +115,7 @@ class MailController {
                     const cronFormat = `${scheduleDateTime.minutes()} ${scheduleDateTime.hours()} ${scheduleDateTime.date()} ${scheduleDateTime.month() + 1} *`;
 
                     cron.schedule(cronFormat, async () => {
-                        await mailService.sendMail(user.email, to.split(','), cc?.split(',') || [], bcc?.split(',') || [], subject, content);
+                        await mailService.sendMail(user.email, to.split(','), cc?.split(',') || [], bcc?.split(',') || [], subject, updatedContent, attachments);
                         console.log('Email sent successfully at', scheduleDateTime);
                     });
                 }
@@ -80,84 +157,6 @@ class MailController {
             res.status(500).json({ message: error.message });
         }
     }
-
-    static async updateEmail(req: Request, res: Response) {
-        try {
-            const emailId = parseInt(req.params.id);
-            const { userId, to, cc, bcc, subject, content, scheduleDate, scheduleTime } = req.body;
-
-            if (!emailId) throw new HttpException(400, 'Email ID is required');
-            if (!userId) throw new HttpException(400, 'User ID is required');
-
-            // Temukan user berdasarkan ID
-            const user = await AuthRepository.findById(parseInt(userId));
-            if (!user) throw new HttpException(400, "User not found");
-
-
-            if (!user || !user.appPassword) throw new HttpException(400, "User not found or app password not set");
-
-            // Update informasi dasar email
-            const emailData: EmailData = {
-                userId: user.id,
-                to,
-                cc: cc || null,
-                bcc: bcc || null,
-                subject,
-                content,
-            };
-
-            // Perbarui email dalam database
-            await MailRepository.updateEmail(emailId, emailData);
-
-            if (!scheduleDate || scheduleDate.length === 0) {
-                // Jika tidak ada jadwal, kirim email segera
-                const mailService = new MailService();
-                mailService.configure(user.email, user.appPassword);
-                await mailService.sendMail(user.email, to.split(','), cc?.split(',') || [], bcc?.split(',') || [], subject, content);
-                console.log('Email sent immediately');
-            } else {
-                // Jika ada jadwal, perbarui jadwal email
-                const schedules: Date[] = [];
-                const schedulesDB: EmailScheduleData[] = [];
-                for (let i = 0; i < scheduleDate.length; i++) {
-                    const scheduleDateTime = moment(`${scheduleDate[i]} ${scheduleTime[i]}`, 'YYYY-MM-DD HH:mm');
-                    const scheduleDateTimeDB = moment(`${scheduleDate[i]} ${scheduleTime[i]}`, 'YYYY-MM-DD HH:mm');
-
-                    schedules.push(scheduleDateTime.toDate());
-                    schedulesDB.push({
-                        emailId: emailId,
-                        scheduleDate: scheduleDateTimeDB.add(7, 'hours').toDate()
-                    });
-
-                    // Tentukan format cron
-                    const cronFormat = `${scheduleDateTime.minutes()} ${scheduleDateTime.hours()} ${scheduleDateTime.date()} ${scheduleDateTime.month() + 1} *`;
-
-                    // Jadwalkan pengiriman email
-                    cron.schedule(cronFormat, async () => {
-                        const mailService = new MailService();
-
-                        if (user.email && user.appPassword) {
-                            mailService.configure(user.email, user.appPassword);
-                            await mailService.sendMail(user.email, to.split(','), cc?.split(',') || [], bcc?.split(',') || [], subject, content);
-                            console.log('Email sent successfully at', scheduleDateTime);
-                        } else {
-                            console.error('Email or app password is null');
-                        }
-                    });
-                }
-
-                // Perbarui jadwal dalam database
-                await MailRepository.updateEmailSchedules(emailId, schedulesDB);
-                console.log('Schedules updated:', schedulesDB); // Debugging log
-            }
-
-            res.status(200).json({ message: 'Email updated successfully' });
-        } catch (error: any) {
-            console.error('Error updating email:', error);
-            res.status(500).json({ message: error.message });
-        }
-    }
-
 }
 
 export default MailController;

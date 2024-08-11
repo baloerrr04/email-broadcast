@@ -12,6 +12,8 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import { refreshUserData } from './modules/auth/auth.middleware';
 import MailRepository from './modules/mailer/mailer.repository';
+import multer from 'multer';
+import handleFileUpload from './common/libs/uploadImage';
 
 
 const app: Application = express();
@@ -44,7 +46,9 @@ app.use(cookieParser());
 app.use(refreshUserData);
 
 app.use('/edit-email', express.static(path.join(__dirname, 'public')));
-
+app.use('/send-email', express.static(path.join(__dirname, 'node_modules', 'tinymce')));
+// app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join('uploads')))
 
 app.get('/login', (req, res) => {
     res.render('login.ejs', {
@@ -101,6 +105,28 @@ app.get('/edit-email/:id', async (req, res) => {
     }
 })
 
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname);
+      cb(null, file.fieldname + '-' + Date.now() + ext);
+    }
+  });
+  
+  const upload = multer({ storage: storage });;
+
+app.post('/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+
+  // Misalnya, jika Anda ingin menyimpan file di lokasi yang berbeda atau memproses file lebih lanjut, Anda bisa melakukannya di sini
+
+  // Kembalikan URL di mana file dapat diakses
+  res.json({ fileUrl: `/uploads/${req.file.filename}` }); // Sesuaikan ini dengan URL yang dapat diakses dari aplikasi Anda
+});
 
 
 app.use('/', authRoutes);
