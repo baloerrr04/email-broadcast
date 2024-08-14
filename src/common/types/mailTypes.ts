@@ -7,6 +7,7 @@ export interface EmailData {
     bcc?: string;
     subject: string;
     content: string;
+    status?: string;
 }
 
 export interface EmailScheduleData {

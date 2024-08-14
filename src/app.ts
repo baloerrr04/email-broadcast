@@ -13,7 +13,6 @@ import cookieParser from 'cookie-parser';
 import { refreshUserData } from './modules/auth/auth.middleware';
 import MailRepository from './modules/mailer/mailer.repository';
 import multer from 'multer';
-import handleFileUpload from './common/libs/uploadImage';
 
 
 const app: Application = express();
@@ -65,9 +64,14 @@ app.get('/', async (req, res) => {
     }
 });
 
-// app.get('/', (req,res) => {
-//     res.render('index.ejs', { user: req.user, title: 'Broadcast' });
-// })
+app.get('/scheduled', async (req, res) => {
+    if (req.isAuthenticated() && req.user) {
+        res.render('scheduled-email.ejs', { user: req.user, title: 'Broadcast' });
+    } else {
+        res.redirect('/login');
+    }
+})
+
 
 app.get('/input-app-password', (req, res) => {
     if (req.isAuthenticated()) {
@@ -121,10 +125,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }
-
-  // Misalnya, jika Anda ingin menyimpan file di lokasi yang berbeda atau memproses file lebih lanjut, Anda bisa melakukannya di sini
-
-  // Kembalikan URL di mana file dapat diakses
   res.json({ fileUrl: `/uploads/${req.file.filename}` }); // Sesuaikan ini dengan URL yang dapat diakses dari aplikasi Anda
 });
 

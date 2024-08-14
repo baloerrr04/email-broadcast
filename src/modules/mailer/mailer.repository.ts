@@ -56,10 +56,11 @@ class MailRepository {
         } as EmailWithSchedules;
     }
 
-    static async findByUserId(userId: number): Promise<EmailWithSchedules[]> {
+    static async findByUserIdAndStatus(userId: number, status: string): Promise<EmailWithSchedules[]> {
         const emails = await prisma.email.findMany({
-            where: { userId },
+            where: { userId, status },
             include: { schedules: true },
+            orderBy: { createdAt: 'desc'}
         });
 
         return emails.map(email => ({
@@ -110,6 +111,15 @@ class MailRepository {
             })),
         });
     }
-}
+
+    static async updateEmailStatus(emailId: number, status: string): Promise<void> {
+        await prisma.email.update({
+            where: { id: emailId},
+            data: {
+                status
+            }
+        })
+    }
+ }
 
 export default MailRepository;
