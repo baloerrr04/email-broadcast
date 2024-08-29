@@ -1,41 +1,103 @@
 <%- include('partials/header') -%>
 
-<div class="container p-4 d-flex align-items-center justify-content-center min-vh-100">
+<div
+  class="container p-4 d-flex align-items-center justify-content-center min-vh-100"
+>
   <div class="card border-none">
-    <div class="card-body d-flex flex-column justify-content-center align-items-center">
-      <form class="row g-3" action="/api/send-email" method="POST" id="emailForm">
+    <div
+      class="card-body d-flex flex-column justify-content-center align-items-center"
+    >
+      <form
+        class="row g-3"
+        action="/api/send-email"
+        method="POST"
+        id="emailForm"
+      >
         <div class="col-md-4">
-          <input type="hidden" id="userId" name="userId" value="<%= user.id %>" required />
+          <input
+            type="hidden"
+            id="userId"
+            name="userId"
+            value="<%= user.id %>"
+            required
+          />
           <div class="mb-3">
             <label for="to" class="form-label">To:</label>
-            <input type="text" class="form-control" id="to" name="to" placeholder="Separate emails with commas" required />
+            <div id="to-container" class="email-container">
+              <input
+                type="text"
+                id="to"
+                name="to"
+                class="email-input"
+                placeholder="Type email addresses separated by commas"
+                autocomplete="email"
+              />
+            </div>
           </div>
         </div>
+
         <div class="col-md-4">
           <div class="mb-3">
             <label for="cc" class="form-label">CC:</label>
-            <input type="text" class="form-control" id="cc" name="cc" placeholder="Separate emails with commas" />
+            <div id="cc-container" class="email-container">
+              <input
+                type="text"
+                id="cc"
+                name="cc"
+                class="email-input"
+                placeholder="Type email addresses separated by commas"
+              />
+            </div>
           </div>
         </div>
+        
         <div class="col-md-4">
           <div class="mb-3">
             <label for="bcc" class="form-label">BCC:</label>
-            <input type="text" class="form-control" id="bcc" name="bcc" placeholder="Separate emails with commas" />
+            <div id="bcc-container" class="email-container">
+              <input
+                type="text"
+                id="bcc"
+                name="bcc"
+                class="email-input"
+                placeholder="Type email addresses separated by commas"
+              />
+            </div>
           </div>
         </div>
+
         <div class="mb-3">
           <label for="subject" class="form-label">Subject:</label>
-          <input type="text" class="form-control" id="subject" name="subject" required />
+          <input
+            type="text"
+            class="form-control"
+            id="subject"
+            name="subject"
+            required
+          />
         </div>
         <div class="mb-3">
           <label for="content" class="form-label">Content:</label>
-          <textarea class="form-control" id="content" name="content" rows="2"></textarea>
+          <textarea
+            class="form-control"
+            id="content"
+            name="content"
+            rows="2"
+          ></textarea>
         </div>
         <div class="col-md-6">
-            <div id="scheduleContainer"></div>
+          <div id="scheduleContainer"></div>
         </div>
-        <button type="button" class="btn btn-secondary btn-block mt-2" onclick="addSchedule()">Add Schedule</button>
-        <button type="submit" class="btn btn-primary btn-block mt-3">Send Email</button>
+        <button
+          type="button"
+          class="btn btn-secondary btn-block mt-2"
+          onclick="addSchedule()"
+        >
+          Add Schedule
+        </button>
+        <button type="submit" class="btn btn-primary btn-block mt-3">
+          Send Email
+        </button>
       </form>
     </div>
 
@@ -43,9 +105,7 @@
     <script>
       window.location.href = "/input-app-password";
     </script>
-    <% } %> 
-    
-    <% if(!user.id) { %>
+    <% } %> <% if(!user.id) { %>
     <script>
       window.location.href = "/login";
     </script>
@@ -69,7 +129,7 @@
   }
 
   function removeSchedule(button) {
-    button.closest('.schedule').remove();
+    button.closest(".schedule").remove();
   }
 
   async function sendAuthenticatedRequest(url) {
@@ -87,6 +147,81 @@
   }
 
   fetchData();
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const toContainer = document.getElementById("to-container");
+    const toInput = document.getElementById("to");
+
+    const ccContainer = document.getElementById("cc-container");
+    const ccInput = document.getElementById("cc");
+
+    const bccContainer = document.getElementById("bcc-container");
+    const bccInput = document.getElementById("bcc");
+
+    function addEmailTag(container, input, email) {
+      const emailTag = document.createElement("div");
+      emailTag.className = "email-tag";
+      emailTag.innerHTML = `
+      <span>${email}</span>
+      <span class="remove-tag">&times;</span>
+    `;
+      container.insertBefore(emailTag, input);
+      updateEmailInput(container, input); // Update input value after adding a tag
+    }
+
+    function updateEmailInput(container, input) {
+      const emailTags = container.querySelectorAll(
+        ".email-tag span:first-child"
+      );
+      const emailArray = Array.from(emailTags).map((tag) => tag.textContent);
+      input.value = emailArray.join(","); // Combine emails into a single comma-separated string
+    }
+
+    function handleInput(container, input) {
+      input.addEventListener("input", () => {
+        const inputValue = input.value.trim();
+        if (inputValue.includes(",")) {
+          const emails = inputValue.split(",").filter((email) => email.trim());
+          emails.forEach((email) => {
+            addEmailTag(container, input, email.trim());
+          });
+          input.value = ""; // Clear input field after processing
+        }
+      });
+
+      // Tambahkan event listener untuk blur
+      input.addEventListener("blur", () => {
+        const inputValue = input.value.trim();
+        if (inputValue) {
+          addEmailTag(container, input, inputValue);
+          input.value = ""; // Clear input field after processing
+        }
+      });
+    }
+
+    function handleTagRemoval(container, input) {
+      container.addEventListener("click", (e) => {
+        if (e.target.classList.contains("remove-tag")) {
+          e.target.parentElement.remove();
+          updateEmailInput(container, input); // Update input value after removing a tag
+        }
+      });
+    }
+
+    handleInput(toContainer, toInput);
+    handleInput(ccContainer, ccInput);
+    handleInput(bccContainer, bccInput);
+
+    handleTagRemoval(toContainer, toInput);
+    handleTagRemoval(ccContainer, ccInput);
+    handleTagRemoval(bccContainer, bccInput);
+
+    document.getElementById("emailForm").addEventListener("submit", () => {
+      updateEmailInput(toContainer, toInput);
+      updateEmailInput(ccContainer, ccInput);
+      updateEmailInput(bccContainer, bccInput);
+    });
+  });
 </script>
 
 <%- include('partials/footer') -%>

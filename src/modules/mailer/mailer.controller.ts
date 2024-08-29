@@ -16,7 +16,7 @@ class MailController {
             const userId = parseInt(req.query.userId as string);
             const status = req.query.status as string;
             const emails = await MailRepository.findByUserIdAndStatus(userId, status);
-            res.status(200).json(emails); 
+            res.status(200).json(emails);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
         }
@@ -32,6 +32,8 @@ class MailController {
 
             const mailService = new MailService();
             mailService.configure(user.email, user.appPassword);
+
+
 
             const emailData: EmailData = { userId: user.id, to, cc, bcc, subject, content, status: "Menunggu" };
             const email = await MailRepository.addEmail(emailData);
@@ -118,7 +120,7 @@ class MailController {
                 await MailRepository.addEmailSchedule(email.id, schedulesDB);
             }
 
-            res.status(200).json({ message: 'Email sent successfully' });
+            res.redirect('/');
         } catch (error: any) {
             res.status(500).json({ message: error.message });
         }

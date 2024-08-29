@@ -133,7 +133,7 @@
       try {
         await sendAuthenticatedRequest(`/api/emails/${emailId}`, "DELETE");
         alert("Email deleted successfully");
-        fetchEmails(); // Refresh the list of emails
+        fetchEmails("Menunggu"); // Refresh the list of emails
       } catch (error) {
         console.error("Error deleting email:", error);
         alert("Failed to delete email");
