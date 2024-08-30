@@ -1,73 +1,5 @@
-<%- include('partials/header') -%>
-
-<div class="wrapper d-flex align-items-stretch">
-  <nav id="sidebar" class="active bg-dark">
-    <h1><a href="index.html" class="logo">P.</a></h1>
-    <ul class="list-unstyled components mb-5">
-      <li>
-        <a href="/"><span class="fa fa-inbox"></span>Inbox</a>
-      </li>
-      <li class="active">
-        <a href="/scheduled"><span class="fa fa-calendar"></span>Scheduled</a>
-      </li>
-    </ul>
-  </nav>
-
-  <!-- Page Content  -->
-  <div id="contents" class="p-4 p-md-5">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <div class="container-fluid">
-        <button type="button" id="sidebarCollapse" class="btn btn-primary">
-          <i class="fa fa-bars"></i>
-          <span class="sr-only">Toggle Menu</span>
-        </button>
-        <a
-          href="/send-email"
-          type="button"
-          id="sidebarCollapse"
-          class="btn btn-success ms-3"
-        >
-          <!-- <i class="fa fa-paper-plane"></i> -->
-          compose
-        </a>
-        <button
-          class="btn btn-dark d-inline-block d-lg-none ml-auto"
-          type="button"
-          data-toggle="collapse"
-          data-target="#navbarSupportedContent"
-          aria-controls="navbarSupportedContent"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <i class="fa fa-bars"></i>
-        </button>
-
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="nav navbar-nav ml-auto">
-            <li class="nav-item">
-              <a class="btn btn-danger" href="/logout">Logout</a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-
-   
-
-    <div class="card-body border-0" id="emailsContainer">
-      <!-- Emails will be inserted here by JavaScript -->
-    </div>
-
-    <% if (!user.appPassword) { %>
-    <script>
-      window.location.href = "/input-app-password";
-    </script>
-    <% } %> <% if(!user.id) { %>
-    <script>
-      window.location.href = "/login";
-    </script>
-    <% } %>
-  </div>
+<div class="card-body" id="emailsContainer">
+  <!-- Emails will be inserted here by JavaScript -->
 </div>
 
 <script>
@@ -89,7 +21,7 @@
     return data;
   }
 
-  async function fetchEmails(status = '') {
+  async function fetchEmails(status = "") {
     try {
       const emails = await sendAuthenticatedRequest(
         `/api/emails?userId=<%= user.id %>&status=${status}`
@@ -108,20 +40,20 @@
     }
 
     const container = document.getElementById("emailsContainer");
-    container.innerHTML = ""; 
+    container.innerHTML = "";
 
     emails.forEach((email) => {
       const emailCard = document.createElement("div");
       emailCard.classList.add("card", "mb-1", "border-0", "shadow-sm");
       emailCard.innerHTML = `
-        <div class="card-body">
-          <h5 class="card-title">${email.subject}</h5>
-          <p class="card-text"><small class="text-muted">To: ${email.to}, Cc: ${email.cc}, Bcc: ${email.bcc}</small></p>
-          <button class="btn btn-danger ms-2" onclick="deleteEmail(${email.id})">
-            <i class="fa fa-trash"></i>
-            </button>
-        </div>
-      `;
+      <div class="card-body">
+        <h5 class="card-title">${email.subject}</h5>
+        <p class="card-text"><small class="text-muted">To: ${email.to}, Cc: ${email.cc}, Bcc: ${email.bcc}</small></p>
+        <button class="btn btn-danger ms-2" onclick="deleteEmail(${email.id})">
+          <i class="fa fa-trash"></i>
+          </button>
+      </div>
+    `;
       container.appendChild(emailCard);
     });
   }
@@ -131,7 +63,7 @@
       try {
         await sendAuthenticatedRequest(`/api/emails/${emailId}`, "DELETE");
         alert("Email deleted successfully");
-        fetchEmails("Terkirim"); // Refresh the list of emails
+        fetchEmails("Terkirim");
       } catch (error) {
         console.error("Error deleting email:", error);
         alert("Failed to delete email");
@@ -141,5 +73,3 @@
 
   fetchEmails("Terkirim");
 </script>
-
-<%- include('partials/footer') -%>

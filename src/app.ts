@@ -13,6 +13,7 @@ import cookieParser from 'cookie-parser';
 import { refreshUserData } from './modules/auth/auth.middleware';
 import MailRepository from './modules/mailer/mailer.repository';
 import multer from 'multer';
+import expressLayouts from 'express-ejs-layouts'
 
 
 const app: Application = express();
@@ -20,6 +21,10 @@ const app: Application = express();
 app.engine("ejs", ejs.renderFile);
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
+app.use(expressLayouts);
+app.set("layout", "./layouts/layout.ejs");
+app.set("layout extractScripts", true);
+
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -31,7 +36,6 @@ app.use(
         cookie: { secure: false },
     })
 );
-
 
 // Middleware
 app.use(morgan('dev'));
@@ -47,17 +51,17 @@ app.use(refreshUserData);
 app.use('/edit-email', express.static(path.join(__dirname, 'public')));
 app.use('/send-email', express.static(path.join(__dirname, 'node_modules', 'tinymce')));
 // app.use('/uploads', express.static('uploads'));
-app.use('/uploads', express.static(path.join('uploads')))
+app.use('/uploads', express.static(path.join('uploads')));
 
 app.get('/login', (req, res) => {
     res.render('login.ejs', {
-        title: 'Broadcast'
+        title: 'Broadcast',
+        layout: './layouts/guest.ejs'
     });
 });
 
 app.get('/', async (req, res) => {
     if (req.isAuthenticated() && req.user) {
-
         res.render('index.ejs', { user: req.user, title: 'Broadcast' });
     } else {
         res.redirect('/login');
