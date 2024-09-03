@@ -27,7 +27,9 @@ class AuthController {
             const loginData = plainToClass(LoginDTO, req.body);
             const { email, password } = loginData;
             const { token, user } = await AuthService.login(email, password);
-            res.json({ token, user });
+            // res.json({ token, user });
+            res.cookie('authToken', token, { httpOnly: true });
+            return res.redirect('/');
         } catch (error) {
             if ((error as ErrorResponse).status && (error as ErrorResponse).message) {
                 res.status((error as ErrorResponse).status).json({ message: (error as ErrorResponse).message });
@@ -56,7 +58,6 @@ class AuthController {
             appPasswordDTO.appPassword = appPassword;
 
             const user = await AuthService.saveAppPassword(userIdNumber, appPasswordDTO);
-            // res.status(200).json({ message: 'App password saved successfully', user });
 
             res.redirect('/dashboard');
         } catch (error: any) {
