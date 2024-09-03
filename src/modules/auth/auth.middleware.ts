@@ -7,15 +7,33 @@ import AuthRepository from './auth.repository';
 import { User } from '@prisma/client';
 
 
+export function redirectIfAuthenticated(req: Request, res: Response, next: NextFunction) {
+    const token = req.cookies['authToken'];
+
+    if (token) {
+        try {
+            const secret = process.env.JWT_SECRET;
+            if (!secret) throw new Error("JWT Secret not configured");
+
+            jwt.verify(token, secret);
+
+            return res.redirect('/');
+        } catch (error) {
+            return next();
+        }
+    } else {
+        return next();
+    }
+}
+
 
 export function getAuthorization(req: Request, res:Response, next: NextFunction) {
-    // const token = req.header('Authorization')?.replace('Bearer ', '');
 
     const token = req.cookies['authToken'];
 
 
     if (!token) {
-        return res.status(401).json({ message: 'Access denied, no token provided' });
+        return res.redirect('/login')
     }
 
     try {
