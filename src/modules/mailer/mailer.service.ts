@@ -7,7 +7,6 @@ class MailService {
     private MailGenerator: Mailgen | undefined;
 
     configure(email: string, appPassword: string): void {
-        // Konfigurasi transport dengan host SMTP khusus
         const config = {
             host: 'smtp.gmail.com', // Host SMTP khusus
             port: 587, // Port SMTP, sesuaikan dengan port yang digunakan oleh host
@@ -52,8 +51,8 @@ class MailService {
           cc: ccArray.join(','),
           bcc: bccArray.join(','),
           subject: subject,
-          html: content, // HTML content that may include <img src="cid:...">
-          attachments: attachments, // Array of attachments, including images
+          html: content,
+          attachments: attachments, 
         };
       
         await this.transporter.sendMail(message);
