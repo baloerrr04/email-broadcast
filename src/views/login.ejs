@@ -1,25 +1,22 @@
-<%- include('partials/header') -%>
-
 <div
   class="container d-flex align-items-center justify-content-center min-vh-100"
 >
   <div class="card border-none">
     <div class="card-body d-flex flex-column justify-content-center align-items-center">
-      <p class="fw-bold">Login with Gmail Account</p>
-      <a href="/auth/google" class="btn btn-light">
-        <img
-          src="images/google.png"
-          height="50px"
-          width="50px"
-          alt="Google logo"
-        />
-        <span>Sign in with Google</span>
-      </a>
+      <h3 class="mb-4">Login</h3>
+        <form action="/login" method="POST" class="w-100" style="max-width: 400px;">
+          <div class="mb-3">
+            <label for="email" class="form-label">Email address</label>
+            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary">Login</button>
+          </div>
+        </form>
     </div>
   </div>
 </div>
-<div class="center">
-  <a href="/auth/google" class="google-btn"> </a>
-</div>
-
-<%- include('partials/footer') -%>

@@ -3,3 +3,75 @@
 
   schedule email
 </div>
+
+<script>
+  async function sendAuthenticatedRequest(url, method = "GET", body = null) {
+    const response = await fetch(url, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: body,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  }
+
+  async function fetchEmails(status = "") {
+    try {
+      const emails = await sendAuthenticatedRequest(
+        `/api/emails?userId=<%= user.id %>&status=${status}`
+      );
+      console.log("Fetched Emails:", emails);
+      displayEmails(emails);
+    } catch (error) {
+      console.error("Error fetching emails:", error);
+    }
+  }
+
+  function displayEmails(emails) {
+    if (!Array.isArray(emails)) {
+      console.error("Invalid emails format:", emails);
+      return;
+    }
+
+    const container = document.getElementById("emailsContainer");
+    container.innerHTML = "";
+
+    emails.forEach((email) => {
+      const emailCard = document.createElement("div");
+      emailCard.classList.add("card", "mb-1", "border-0", "shadow-sm");
+      emailCard.innerHTML = `
+      <div class="card-body">
+        <h5 class="card-title">${email.subject}</h5>
+        <p class="card-text"><small class="text-muted">To: ${email.to}, Cc: ${email.cc}, Bcc: ${email.bcc}</small></p>
+        <button class="btn btn-danger ms-2" onclick="deleteEmail(${email.id})">
+          <i class="fa fa-trash"></i>
+          </button>
+      </div>
+    `;
+      container.appendChild(emailCard);
+    });
+  }
+
+  async function deleteEmail(emailId) {
+    if (confirm("Are you sure you want to delete this email?")) {
+      try {
+        await sendAuthenticatedRequest(`/api/emails/${emailId}`, "DELETE");
+        alert("Email deleted successfully");
+        fetchEmails("Terkirim");
+      } catch (error) {
+        console.error("Error deleting email:", error);
+        alert("Failed to delete email");
+      }
+    }
+  }
+
+  fetchEmails("Menunggu");
+</script>

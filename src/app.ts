@@ -10,7 +10,7 @@ import ejs from 'ejs';
 import path from 'path';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
-import { refreshUserData } from './modules/auth/auth.middleware';
+import { getAuthorization, redirectIfAuthenticated, refreshUserData } from './modules/auth/auth.middleware';
 import MailRepository from './modules/mailer/mailer.repository';
 import multer from 'multer';
 import expressLayouts from 'express-ejs-layouts'
@@ -53,23 +53,24 @@ app.use('/send-email', express.static(path.join(__dirname, 'node_modules', 'tiny
 // app.use('/uploads', express.static('uploads'));
 app.use('/uploads', express.static(path.join('uploads')));
 
-app.get('/login', (req, res) => {
+app.get('/login', redirectIfAuthenticated, (req, res) => {
     res.render('login.ejs', {
         title: 'Broadcast',
         layout: './layouts/guest.ejs'
     });
 });
 
-app.get('/', async (req, res) => {
-    if (req.isAuthenticated() && req.user) {
+app.get('/', getAuthorization, async (req, res) => {
+    if (req.user) {
+        console.log(req.user);
         res.render('index.ejs', { user: req.user, title: 'Broadcast' });
     } else {
         res.redirect('/login');
     }
 });
 
-app.get('/scheduled', async (req, res) => {
-    if (req.isAuthenticated() && req.user) {
+app.get('/scheduled',getAuthorization, async (req, res) => {
+    if (req.user) {
         res.render('scheduled-email.ejs', { user: req.user, title: 'Broadcast' });
     } else {
         res.redirect('/login');
@@ -78,11 +79,11 @@ app.get('/scheduled', async (req, res) => {
 
 
 app.get('/input-app-password', (req, res) => {
-    if (req.isAuthenticated()) {
+    // if (req.isAuthenticated()) {
         res.render('input-app-password.ejs', { user: req.user, title: 'App Password' });
-    } else {
-        res.redirect('/login');
-    }
+    // } else {
+    //     res.redirect('/login');
+    // }
 });
 
 app.get('/about', (req, res) => {
@@ -91,8 +92,8 @@ app.get('/about', (req, res) => {
     });
 });
 
-app.get('/send-email', async (req, res) => {
-    if (req.isAuthenticated() && req.user) {
+app.get('/send-email', getAuthorization, async (req, res) => {
+    if (req.user) {
         res.render('add-email.ejs', { user: req.user, title: 'Send Email' });
     } else {
         res.redirect('/login');

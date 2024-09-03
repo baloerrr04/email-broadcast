@@ -31,14 +31,10 @@
       <div id="contents" class="p-4 p-md-5">
         <%- include('../partials/navbar.ejs') %>
 
-
         <!-- Main Slot -->
         <main><%- body %></main>
 
-        <%- script %>
-        
-        
-        <% if (!user.appPassword) { %>
+        <!-- <%- script %> <% if (!user.appPassword) { %>
         <script>
           window.location.href = "/input-app-password";
         </script>
@@ -46,7 +42,7 @@
         <script>
           window.location.href = "/login";
         </script>
-        <% } %>
+        <% } %> -->
       </div>
     </div>
 
