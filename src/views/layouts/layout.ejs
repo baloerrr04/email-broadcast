@@ -15,40 +15,161 @@
       referrerpolicy="origin"
     ></script>
     <script src="js/tinymce-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
-      body {
+      /* body {
         font-family: "Roboto", sans-serif;
-      }
+      } */
     </style>
   </head>
-  <body class="bg-white">
-    <div class="wrapper d-flex align-items-stretch">
+  <body>
+    <div
+      class="page-wrapper"
+      id="main-wrapper"
+      data-layout="vertical"
+      data-navbarbg="skin6"
+      data-sidebartype="full"
+      data-sidebar-position="fixed"
+      data-header-position="fixed"
+    >
+      <!-- Sidebar Start -->
       <%- include('../partials/sidebar.ejs') %>
+      <!--  Sidebar End -->
+      <!--  Main wrapper -->
 
-      <!-- Page Content -->
-      <div id="contents" class="p-4 p-md-5">
+      <div class="body-wrapper">
+        <!--  Header Start -->
         <%- include('../partials/navbar.ejs') %>
+        <!--  Header End -->
 
-        <!-- Main Slot -->
-        <main><%- body %></main>
-
-        <!-- <%- script %> <% if (!user.appPassword) { %>
-        <script>
-          window.location.href = "/input-app-password";
-        </script>
-        <% } %> <% if(!user.id) { %>
-        <script>
-          window.location.href = "/login";
-        </script>
-        <% } %> -->
+        <div class="container-fluid min-vh-100">
+          <%- body %>
+        </div>
       </div>
     </div>
 
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/jquery.min.js"></script>
-    <script src="js/popper.js"></script>
-    <script src="js/main.js"></script>
+    <%- script %>
+
+    <script>
+      function addSchedule() {
+        const container = document.getElementById("scheduleContainer");
+        const scheduleDiv = document.createElement("div");
+        scheduleDiv.classList.add("mb-3", "schedule");
+        scheduleDiv.innerHTML = `
+      <label for="scheduleDate" class="form-label">Schedule Date:</label>
+      <input type="date" class="form-control scheduleDate" name="scheduleDate[]" required />
+      <label for="scheduleTime" class="form-label">Schedule Time:</label>
+      <input type="time" class="form-control scheduleTime" name="scheduleTime[]" required />
+      <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeSchedule(this)">Remove Schedule</button>
+    `;
+        container.appendChild(scheduleDiv);
+      }
+
+      function removeSchedule(button) {
+        button.closest(".schedule").remove();
+      }
+
+      async function sendAuthenticatedRequest(url) {
+        const response = await fetch(url, {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+        return data;
+      }
+
+      async function fetchData() {
+        const data = await sendAuthenticatedRequest("/api/send-email");
+      }
+
+      fetchData();
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const toContainer = document.getElementById("to-container");
+        const toInput = document.getElementById("to");
+
+        const ccContainer = document.getElementById("cc-container");
+        const ccInput = document.getElementById("cc");
+
+        const bccContainer = document.getElementById("bcc-container");
+        const bccInput = document.getElementById("bcc");
+
+        function addEmailTag(container, input, email) {
+          const emailTag = document.createElement("div");
+          emailTag.className = "email-tag";
+          emailTag.innerHTML = `
+      <span>${email}</span>
+      <span class="remove-tag">&times;</span>
+    `;
+          container.insertBefore(emailTag, input);
+          updateEmailInput(container, input); // Update input value after adding a tag
+        }
+
+        function updateEmailInput(container, input) {
+          const emailTags = container.querySelectorAll(
+            ".email-tag span:first-child"
+          );
+          const emailArray = Array.from(emailTags).map(
+            (tag) => tag.textContent
+          );
+          input.value = emailArray.join(","); // Combine emails into a single comma-separated string
+        }
+
+        function handleInput(container, input) {
+          input.addEventListener("input", () => {
+            const inputValue = input.value.trim();
+            if (inputValue.includes(",")) {
+              const emails = inputValue
+                .split(",")
+                .filter((email) => email.trim());
+              emails.forEach((email) => {
+                addEmailTag(container, input, email.trim());
+              });
+              input.value = ""; // Clear input field after processing
+            }
+          });
+
+          // Tambahkan event listener untuk blur
+          input.addEventListener("blur", () => {
+            const inputValue = input.value.trim();
+            if (inputValue) {
+              addEmailTag(container, input, inputValue);
+              input.value = ""; // Clear input field after processing
+            }
+          });
+        }
+
+        function handleTagRemoval(container, input) {
+          container.addEventListener("click", (e) => {
+            if (e.target.classList.contains("remove-tag")) {
+              e.target.parentElement.remove();
+              updateEmailInput(container, input); // Update input value after removing a tag
+            }
+          });
+        }
+
+        handleInput(toContainer, toInput);
+        handleInput(ccContainer, ccInput);
+        handleInput(bccContainer, bccInput);
+
+        handleTagRemoval(toContainer, toInput);
+        handleTagRemoval(ccContainer, ccInput);
+        handleTagRemoval(bccContainer, bccInput);
+
+        document.getElementById("emailForm").addEventListener("submit", () => {
+          updateEmailInput(toContainer, toInput);
+          updateEmailInput(ccContainer, ccInput);
+          updateEmailInput(bccContainer, bccInput);
+        });
+      });
+    </script>
+
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/app.min.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
   </body>
 </html>
