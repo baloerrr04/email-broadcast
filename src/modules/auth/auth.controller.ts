@@ -10,8 +10,8 @@ class AuthController {
     static async register(req: Request, res: Response) {
         try {
             const registerData = plainToClass(RegisterDTO, req.body);
-            const {email, password} = registerData
-            const user = await AuthService.register(email, password);
+            const {email, password, role} = registerData
+            const user = await AuthService.register(email, password, role);
             res.status(201).json(user);
         } catch (error) {
             if ((error as ErrorResponse).status && (error as ErrorResponse).message) {
@@ -27,7 +27,7 @@ class AuthController {
             const loginData = plainToClass(LoginDTO, req.body);
             const { email, password } = loginData;
             const { token, user } = await AuthService.login(email, password);
-            // res.json({ token, user });
+            // return res.json({ token, user });
             res.cookie('authToken', token, { httpOnly: true });
             return res.redirect('/');
         } catch (error) {
@@ -39,30 +39,21 @@ class AuthController {
         }
     }
 
-    static async saveAppPassword(req: Request, res: Response): Promise<void> {
+    static async addBroadcast(req: Request, res: Response) {
         try {
-            const { userId, appPassword } = req.body;
+            const { email, appPassword } = req.body;
 
-            if (!userId || !appPassword) {
-                res.status(400).json({ message: 'Missing userId or appPassword' });
-                return;
-            }
+            // Memanggil service untuk menambahkan broadcaster baru
+            const newBroadcaster = await AuthService.addBroadcaster(email, appPassword);
 
-            const userIdNumber = parseInt(userId, 10);
-            if (isNaN(userIdNumber)) {
-                res.status(400).json({ message: 'Invalid userId format' });
-                return;
-            }
-
-            const appPasswordDTO = new AppPasswordDTO();
-            appPasswordDTO.appPassword = appPassword;
-
-            const user = await AuthService.saveAppPassword(userIdNumber, appPasswordDTO);
-
-            res.redirect('/dashboard');
+            // Mengembalikan response dengan status 201 dan data broadcaster baru
+            res.status(201).json({
+                message: 'Broadcaster created successfully',
+                broadcaster: newBroadcaster,
+            });
         } catch (error: any) {
-           res.status(500).json({message: error.message})
-           console.log(error.message);
+            console.log(error.message);
+            
         }
     }
 }
