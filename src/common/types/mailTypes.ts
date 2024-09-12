@@ -2,12 +2,16 @@
 
 export interface EmailData {
     userId: number;
+    broadcasterId: number,
+    from: string,
     to: string;
     cc?: string;
     bcc?: string;
     subject: string;
     content: string;
     status?: string;
+    createdAt?: Date;  // Optional createdAt
+    updatedAt?: Date;  // Add updatedAt here
 }
 
 export interface EmailScheduleData {
