@@ -27,26 +27,33 @@ export function redirectIfAuthenticated(req: Request, res: Response, next: NextF
 }
 
 
-export function getAuthorization(req: Request, res:Response, next: NextFunction) {
+interface DecodedToken {
+    userId: number;
+}
 
+export async function getAuthorization(req: Request, res: Response, next: NextFunction) {
     const token = req.cookies['authToken'];
 
-
     if (!token) {
-        return res.redirect('/login')
+        return res.redirect('/login');
     }
 
     try {
         const secret = process.env.JWT_SECRET;
-        if (!secret) throw new HttpException(500, "JWT Secret not configured");
-        const decoded = jwt.verify(token, secret);
-        req.user = decoded;
+        if (!secret) throw new Error("JWT Secret not configured");
+        const decoded = jwt.verify(token, secret) as DecodedToken;
+
+        // Fetch the full user object
+        const user = await AuthRepository.findById(decoded.userId);
+        if (!user) throw new Error("User not found");
+
+        req.user = user; // Ensure that `req.user` matches the `User` type
+
         next();
-    } catch (error) {
-        res.status(400).json({ message: 'Invalid token' });
+    } catch (error: any) {
+        res.redirect('/login');
     }
 }
-
 
 export function validationMiddleware<T>(type: any): (req: Request, res: Response, next: NextFunction) => void {
     return (req: Request, res: Response, next: NextFunction) => {
@@ -64,7 +71,7 @@ export function validationMiddleware<T>(type: any): (req: Request, res: Response
 }
 
 export const refreshUserData = async (req: Request, res: Response, next: NextFunction) => {
-    if (req.isAuthenticated() && req.user) {
+    if (req.user) {
         const userId = (req.user as User).id;
         const updatedUser = await AuthRepository.findById(userId);
         if (updatedUser) {
