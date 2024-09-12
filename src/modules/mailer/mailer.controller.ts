@@ -8,34 +8,46 @@ import { EmailData, EmailScheduleData } from '../../common/types/mailTypes';
 import MailRepository from './mailer.repository';
 import * as Cheerio from 'cheerio';
 import axios from 'axios';
+import HttpStatusCodes from '../../common/constants/http-status-codes';
 
 class MailController {
 
-    static async getEmails(req: Request, res: Response) {
-        try {
-            const userId = parseInt(req.query.userId as string);
-            const status = req.query.status as string;
-            const emails = await MailRepository.findByUserIdAndStatus(userId, status);
-            res.status(200).json(emails);
-        } catch (error: any) {
-            res.status(500).json({ message: error.message });
-        }
-    }
+    // static async getEmailsByStatus(req: Request, res: Response) {
+    //     try {
+    //         const userId = (req.user as { id: number }).id;
+    //         if (userId === undefined) {
+    //             return res.status(400).json({ message: 'User ID is not available' });
+    //         }
+    //         const status = req.params.status;
+    //         const emails = await MailRepository.findByUserIdAndStatus(userId, status);
+        
+    //         if (status === "Terkirim") {
+    //             res.render('index.ejs', { emails, user: req.user, title: 'Broadcast' });
+    //         } else if (status === "Menunggu") {
+    //             res.render('scheduled.ejs', { emails, user: req.user, title: 'Scheduled Emails' });
+    //         } else {
+    //             res.status(400).json({ message: 'Invalid status' });
+    //         }
+    //     } catch (error: any) {
+    //         res.status(500).json({ message: error.message });
+    //     }
+    // }
 
 
     static async sendEmail(req: Request, res: Response) {
         try {
-            const { userId, to, cc, bcc, subject, content, scheduleDate, scheduleTime } = req.body;
-            const user = await AuthRepository.findById(parseInt(userId));
+            const { userId, from, to, cc, bcc, subject, content, scheduleDate, scheduleTime } = req.body;
+            const user = await AuthRepository.findById(parseInt(userId))
+            const broadcaster = await AuthRepository.findByEmailBroadcaster(from)
 
-            if (!user || !user.appPassword) throw new HttpException(400, "User not found or app password not set");
+            if (!user) throw new HttpException(400, "Broadcaster not found or app password not set");
+            if (!broadcaster || !broadcaster.appPassword) throw new HttpException(400, "Broadcaster not found or app password not set");
 
             const mailService = new MailService();
-            mailService.configure(user.email, user.appPassword);
+            mailService.configure(from, broadcaster.appPassword);
 
 
-
-            const emailData: EmailData = { userId: user.id, to, cc, bcc, subject, content, status: "Menunggu" };
+            const emailData: EmailData = { userId: user.id, broadcasterId: broadcaster.id, from, to, cc, bcc, subject, content, status: "Menunggu" };
             const email = await MailRepository.addEmail(emailData);
 
 
@@ -118,6 +130,7 @@ class MailController {
                 }
 
                 await MailRepository.addEmailSchedule(email.id, schedulesDB);
+                await MailRepository.updateEmailStatus(email.id, "Menunggu");
             }
 
             res.redirect('/');
@@ -128,17 +141,12 @@ class MailController {
 
     static async deleteEmail(req: Request, res: Response) {
         try {
-            const emailId = parseInt(req.params.id, 10);
-
-            if (isNaN(emailId)) {
-                return res.status(400).json({ message: 'Invalid email ID' });
-            }
-
-            await MailRepository.deleteEmailById(emailId);
-
-            res.status(200).json({ message: 'Email deleted successfully' });
+            const { id } = req.params
+            await MailService.deleteEmail(parseInt(id));
+            res.redirect('/')
+            return
         } catch (error: any) {
-            res.status(500).json({ message: error.message });
+            throw new HttpException(HttpStatusCodes.BAD_REQUEST, error.message)
         }
     }
 }
