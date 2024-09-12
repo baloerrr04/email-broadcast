@@ -1,13 +1,15 @@
 import nodemailer from "nodemailer";
 import Mailgen from "mailgen";
 import { HttpException } from "../../common/exceptions/HttpExceptions";
+import { EmailData } from "../../common/types/mailTypes";
+import MailRepository from "./mailer.repository";
+import HttpStatusCodes from "../../common/constants/http-status-codes";
 
 class MailService {
     private transporter: nodemailer.Transporter | undefined;
     private MailGenerator: Mailgen | undefined;
 
     configure(email: string, appPassword: string): void {
-        // Konfigurasi transport dengan host SMTP khusus
         const config = {
             host: 'smtp.gmail.com', // Host SMTP khusus
             port: 587, // Port SMTP, sesuaikan dengan port yang digunakan oleh host
@@ -52,12 +54,21 @@ class MailService {
           cc: ccArray.join(','),
           bcc: bccArray.join(','),
           subject: subject,
-          html: content, // HTML content that may include <img src="cid:...">
-          attachments: attachments, // Array of attachments, including images
+          html: content,
+          attachments: attachments, 
         };
       
         await this.transporter.sendMail(message);
       }
+
+      static async deleteEmail(id: number): Promise<void> {
+        const email = await MailRepository.findEmailById(id)
+
+        if (!email) throw new HttpException(HttpStatusCodes.NOT_FOUND, "Email id not found.")
+        await MailRepository.deleteEmailById(email.id);
+
+        return;
+      } 
 
 }
 
