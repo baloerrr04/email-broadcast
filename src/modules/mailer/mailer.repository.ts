@@ -1,3 +1,4 @@
+import { Broadcaster } from '@prisma/client';
 import { EmailData, EmailScheduleData, EmailWithSchedules } from '../../common/types/mailTypes'
 import { prisma } from "../../config/database";
 
@@ -6,6 +7,8 @@ class MailRepository {
         const email = await prisma.email.create({
             data: {
                 userId: emailData.userId,
+                broadcasterId: emailData.broadcasterId,
+                from: emailData.from,
                 to: emailData.to,
                 cc: emailData.cc || null,
                 bcc: emailData.bcc || null,
@@ -39,7 +42,7 @@ class MailRepository {
         console.log('Email schedules inserted:', schedules); // Add this line to debug
     }
 
-    static async findById(id: number): Promise<EmailWithSchedules | null> {
+    static async findEmailById(id: number): Promise<EmailWithSchedules | null> {
         const email = await prisma.email.findUnique({
             where: { id },
             include: { schedules: true },
@@ -73,17 +76,17 @@ class MailRepository {
     }
 
     static async deleteEmailById(id: number): Promise<void> {
-
         await prisma.emailSchedule.deleteMany({
-            where: {emailId: id }
-        })
-
+            where: { emailId: id }
+        });
+    
         await prisma.email.delete({
             where: { id }
-        })
-
-        return
+        });
+    
+        return;
     }
+    
 
 
     static async updateEmail(emailId: number, emailData: EmailData): Promise<void> {
@@ -119,6 +122,11 @@ class MailRepository {
                 status
             }
         })
+    }
+
+    static async findBroadcaster(): Promise<Broadcaster[]> {
+        const broadcasters = await prisma.broadcaster.findMany()
+        return broadcasters;
     }
  }
 
