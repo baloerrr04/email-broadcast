@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import MailController from './mailer.controller'; // Sesuaikan dengan lokasi EmailController
-import { getAuthorization } from '../auth/auth.middleware';
+import { getAuthorization } from '../../middlewares/auth.middleware';;
 
 const router = Router();
 
