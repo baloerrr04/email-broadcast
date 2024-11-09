@@ -55,6 +55,16 @@ export async function getAuthorization(req: Request, res: Response, next: NextFu
     }
 }
 
+export function authorizeRole(role: string) {
+    return (req: Request, res: Response, next: NextFunction) => {
+        if (req.user && (req.user as User).role === role) {
+            next(); // Lanjutkan jika peran cocok
+        } else {
+            res.status(403).send("Access Denied");
+        }
+    };
+}
+
 export function validationMiddleware<T>(type: any): (req: Request, res: Response, next: NextFunction) => void {
     return (req: Request, res: Response, next: NextFunction) => {
         const input = plainToInstance(type, req.body);
