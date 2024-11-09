@@ -4,7 +4,7 @@ class AuthViewController {
 
     static loginPage(req: Request, res: Response) {
         res.render('login.ejs', {
-            title: 'Broadcast',
+            title: 'Login',
             layout: './layouts/guest.ejs',
         });
     }
