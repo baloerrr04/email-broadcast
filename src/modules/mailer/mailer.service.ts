@@ -1,13 +1,22 @@
 import nodemailer from "nodemailer";
 import Mailgen from "mailgen";
 import { HttpException } from "../../common/exceptions/HttpExceptions";
-import { EmailData } from "../../common/types/mailTypes";
 import MailRepository from "./mailer.repository";
 import HttpStatusCodes from "../../common/constants/http-status-codes";
 
 class MailService {
     private transporter: nodemailer.Transporter | undefined;
     private MailGenerator: Mailgen | undefined;
+
+
+    static async findEmailById(id: number) {
+
+      const email = await MailRepository.findEmailById(id);
+
+      if(!email) throw new HttpException(HttpStatusCodes.NOT_FOUND, `Email with id ${id} not found.`);
+
+      return email;
+    }
 
     configure(email: string, appPassword: string): void {
         const config = {
@@ -62,14 +71,14 @@ class MailService {
       }
 
       static async deleteEmail(id: number): Promise<void> {
-        const email = await MailRepository.findEmailById(id)
+        const email = await MailRepository.findEmailById(id);
 
-        if (!email) throw new HttpException(HttpStatusCodes.NOT_FOUND, "Email id not found.")
+        if (!email) throw new HttpException(HttpStatusCodes.NOT_FOUND, `Email with id ${id} not found.`)
         await MailRepository.deleteEmailById(email.id);
 
         return;
       } 
-
+ 
 }
 
 export default MailService;
