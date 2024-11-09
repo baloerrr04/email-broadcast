@@ -1,0 +1,49 @@
+<div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h4>Edit Broadcaster</h4>
+        </div>
+        <div class="card-body">
+          <form action="/api/broadcasters/update/<%= broadcaster.id %>?_method=PUT" method="POST">
+            <div class="alert alert-info">
+              Untuk menggunakan Gmail SMTP, Anda perlu mengaktifkan verifikasi dua
+              langkah di akun Google Anda dan menghasilkan App Password.
+              <a href="https://myaccount.google.com/apppasswords" target="_blank"
+                >Dapatkan App Password di sini</a
+              >.
+            </div>
+            <input type="hidden" name="_method" value="PUT">
+            <!-- Email Input -->
+            <div class="form-group mb-3">
+              <label for="email">Email</label>
+              <input
+                type="email"
+                class="form-control"
+                id="email"
+                name="email"
+                value="<%= broadcaster.email %>"
+                required
+              >
+            </div>
+            
+            <!-- App Password Input -->
+            <div class="form-group mb-3">
+              <label for="appPassword">App Password</label>
+              <input
+                type="password"
+                class="form-control"
+                id="appPassword"
+                name="appPassword"
+                value="<%= broadcaster.appPassword %>"
+                required
+              >
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary">Update Broadcaster</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>

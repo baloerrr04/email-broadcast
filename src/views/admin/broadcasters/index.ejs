@@ -1,0 +1,44 @@
+<!-- SweetAlert Notification -->
+<% if (locals.message) { %>
+  <script>
+      Swal.fire({
+          icon: '<%= locals.message.type === "success" ? "success" : "error" %>',
+          title: '<%= locals.message.text %>',
+          showConfirmButton: false,
+          timer: 2000,
+      });
+  </script>
+<% } %>
+
+
+<div class="row">
+  <div class="col-md-12">
+    <table class="table">
+      <a class="btn btn-primary mb-2" href="/admin/broadcasters/create">Create</a>
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Email</th>
+          <th scope="col">App Password</th>
+          <th scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% broadcasters.forEach((broadcaster, index) => { %>
+        <tr>
+          <td><%= index + 1 %></td>
+          <td><%= broadcaster.email %></td>
+          <td><%= broadcaster.appPassword %></td>
+          <td class="d-flex gap-2">
+            <a class="btn btn-success" href="/admin/broadcasters/edit/<%= broadcaster.id %>">Edit</a>
+            <form id="deleteForm<%= broadcaster.id %>" action="/api/broadcasters/delete/<%= broadcaster.id %>?_method=DELETE" method="post">
+              <input type="hidden" name="_method" value="DELETE">
+              <button type="button" class="btn btn-danger" onclick="confirmDelete(<%= broadcaster.id %>)">Delete</button>
+            </form>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,69 @@
+
+
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h4>Create Broadcaster</h4>
+      </div>
+      <div class="card-body">
+        <form action="/api/broadcasters/create" method="POST">
+          <div class="alert alert-info">
+            Untuk menggunakan Gmail SMTP, Anda perlu mengaktifkan verifikasi dua
+            langkah di akun Google Anda dan menghasilkan App Password.
+            <a href="https://myaccount.google.com/apppasswords" target="_blank"
+              >Dapatkan App Password di sini</a
+            >.
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label" for="email">Email:</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="form-control"
+              placeholder="Email"
+              required
+            />
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label" for="appPassword">
+              App Password:
+              <span
+                class="text-muted"
+                data-bs-toggle="tooltip"
+                title="Masukkan App Password yang Anda buat di akun Google."
+              >
+                (Apa ini?)
+              </span>
+            </label>
+            <input
+              type="password"
+              id="appPassword"
+              name="appPassword"
+              placeholder="Password"
+              class="form-control"
+              required
+            />
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            Create Broadcaster
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const tooltipTriggerList = document.querySelectorAll(
+    '[data-bs-toggle="tooltip"]'
+  );
+  const tooltipList = [...tooltipTriggerList].map(
+    (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
+  );
+</script>
