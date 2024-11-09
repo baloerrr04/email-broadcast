@@ -6,9 +6,6 @@
         <a href="./index.html" class="text-nowrap logo-img mt-3">
           <h4>Pertamina Email</h4>
         </a>
-        <a href="/send-email" class="btn btn-outline-primary w-full px-5">
-          Compose Email
-        </a>
       </div>
       <div
         class="close-btn d-xl-none d-block sidebartoggler cursor-pointer"
@@ -22,28 +19,48 @@
       <ul id="sidebarnav">
         <li class="nav-small-cap">
           <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
-          <span class="hide-menu">Home</span>
+          <span class="hide-menu">Dashboard</span>
         </li>
+
         <li class="sidebar-item mb-2">
-          <a class="sidebar-link <%= currentRoute === '/' ? 'active' : '' %>" href="/" aria-expanded="false">
+          <a
+            class="sidebar-link <%= currentRoute === '/admin/users' ? 'active' : '' %>"
+            href="/admin/users"
+            aria-expanded="false"
+          >
             <span>
               <iconify-icon icon="hugeicons:sent" class="fs-6"></iconify-icon>
             </span>
-            <span class="hide-menu">Emails Sent</span>
+            <span class="hide-menu">Users</span>
           </a>
         </li>
-        <li class="sidebar-item">
-          <a class="sidebar-link <%= currentRoute === '/scheduled' ? 'active' : '' %>" href="/scheduled" aria-expanded="false">
+        <li class="sidebar-item mb-2">
+          <a
+            class="sidebar-link <%= currentRoute === '/admin/broadcasters' ? 'active' : '' %>"
+            href="/admin/broadcasters"
+            aria-expanded="false"
+          >
             <span>
               <iconify-icon
                 icon="gridicons:scheduled"
                 class="fs-6"
               ></iconify-icon>
             </span>
-            <span class="hide-menu">Emails Scheduled</span>
+            <span class="hide-menu">Broadcasters</span>
           </a>
         </li>
-        
+        <li class="sidebar-item mb-2">
+          <a
+            class="sidebar-link <%= currentRoute === '/admin/emails' ? 'active' : '' %>"
+            href="/admin/emails"
+            aria-expanded="false"
+          >
+            <span>
+              <iconify-icon icon="hugeicons:sent" class="fs-6"></iconify-icon>
+            </span>
+            <span class="hide-menu">Emails Sent</span>
+          </a>
+        </li>
       </ul>
     </nav>
     <!-- End Sidebar navigation -->
