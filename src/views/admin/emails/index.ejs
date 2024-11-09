@@ -1,0 +1,68 @@
+<% if (locals.message) { %>
+    <script>
+        Swal.fire({
+            icon: '<%= locals.message.type === "success" ? "success" : "error" %>',
+            title: '<%= locals.message.text %>',
+            showConfirmButton: false,
+            timer: 2000,
+        });
+    </script>
+  <% } %>
+
+<div class="row">
+  <div class="col-md-12">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">From</th>
+          <th scope="col">To</th>
+          <th scope="col">CC</th>
+          <th scope="col">BCC</th>
+          <th scope="col">Subject</th>
+          <th scope="col">Status</th>
+          <th scope="col">Display Dates</th>
+          <th scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% emails.forEach((email, index) => { %>
+        <tr>
+          <th scope="row"><%= index + 1 %></th>
+          <td><%= email.from %></td>
+          <td><%= email.to %></td>
+          <td><%= email.cc || 'N/A' %></td>
+          <td><%= email.bcc || 'N/A' %></td>
+          <td><%= email.subject %></td>
+          <td><%= email.status %></td>
+          <td>
+            <% email.displayDates.forEach(({ displayDate, isPast }) => { %>
+            <div
+              class="p-1 rounded mt-2 <%= isPast ? 'bg-success text-whit' : ' bg-warning' %>"
+            >
+              <%= displayDate %>
+            </div>
+            <% }); %>
+          </td>
+          <td>
+            <form
+              id="deleteForm<%= email.id %>"
+              action="/api/emails/delete/<%= email.id %>?_method=DELETE"
+              method="post"
+            >
+              <input type="hidden" name="_method" value="DELETE" />
+              <button
+                type="button"
+                class="btn btn-danger"
+                onclick="confirmDelete(<%= email.id %>)"
+              >
+                Delete
+              </button>
+            </form>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
