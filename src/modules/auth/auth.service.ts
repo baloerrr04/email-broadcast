@@ -1,11 +1,9 @@
 import bcrypt from "bcrypt";
 import AuthRepository from "./auth.repository";
+import AdminRepository from "../admin/admin.repository";
 import { User } from "../../common/types/userTypes";
-import { Profile } from "passport-google-oauth20"
 import jwt from "jsonwebtoken";
-import MailService from "../mailer/mailer.service";
 import { HttpException } from "../../common/exceptions/HttpExceptions";
-import { AppPasswordDTO } from "./dtos/appPassword.dto";
 import httpStatusCodes from "../../common/constants/http-status-codes"
 import { Broadcaster, Role } from "@prisma/client";
 
@@ -13,80 +11,52 @@ class AuthService {
 
     private static readonly JWT_SECRET = process.env.JWT_SECRET;
 
-    static async register(email: string, password: string, role: Role): Promise<User> {
-        const existingUser = await AuthRepository.findByEmail(email);
-
-        if (existingUser) throw new HttpException(httpStatusCodes.BAD_REQUEST, "User already exists");
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await AuthRepository.createUser({ email, password: hashedPassword, role });
-
-        if (!newUser) throw new HttpException(httpStatusCodes.INTERNAL_SERVER_ERROR, "User registration failed");
-
-        return newUser;
-    }
-
-    static async login(email: string, password: string): Promise<{ token: string, user: User }> {
+    static async login(email: string, password: string): Promise<{ token: string, user: User }> { 
         const user = await AuthRepository.findByEmail(email);
-        if (!user) throw new HttpException(httpStatusCodes.UNAUTHORIZED, "Invalid credentials");
-
+        if (!user) {
+            throw new HttpException(httpStatusCodes.UNAUTHORIZED, "Email address not registered.");
+        }
+    
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) throw new HttpException(httpStatusCodes.UNAUTHORIZED, "Invalid credentials");
-
-        if (!AuthService.JWT_SECRET) throw new HttpException(httpStatusCodes.INTERNAL_SERVER_ERROR, "JWT Secret not configured");
-
+        if (!isMatch) {
+            throw new HttpException(httpStatusCodes.UNAUTHORIZED, "Incorrect password.");
+        }
+    
+        if (!AuthService.JWT_SECRET) {
+            throw new HttpException(httpStatusCodes.INTERNAL_SERVER_ERROR, "JWT Secret not configured.");
+        }
+    
         const token = jwt.sign({ userId: user.id }, AuthService.JWT_SECRET, { expiresIn: '1h' });
         return { token, user };
     }
+    
 
     static async addBroadcaster(email: string, appPassword: string): Promise<Broadcaster> {
-        const existingBroadcaster = await AuthRepository.findByEmailBroadcaster(email);
+        const existingBroadcaster = await AdminRepository.findByEmailBroadcaster(email);
 
         if (existingBroadcaster) throw new HttpException(httpStatusCodes.BAD_REQUEST, "Broadcaster already exists");
 
-        const newBroadcaster = await AuthRepository.createBroadcaster({ email, appPassword });
+        const newBroadcaster = await AdminRepository.createBroadcaster({ email, appPassword });
         
         if (!newBroadcaster) throw new HttpException(httpStatusCodes.INTERNAL_SERVER_ERROR, "User registration failed");
         return newBroadcaster
     }
 
-    // static async loginGoogle(profile: Profile): Promise<{ token: string, user: User }> {
-    //     if (!profile.emails || profile.emails.length === 0) throw new HttpException(httpStatusCodes.INTERNAL_SERVER_ERROR, "Google account does not have an email");
-
-    //     const email = profile.emails[0].value;
-    //     let user = await AuthRepository.findByEmail(email);
-
-    //     if (!user) {
-    //         user = await AuthRepository.createUser({
-    //             email: email,
-    //             // name: profile.displayName || `${profile.name?.givenName} ${profile.name?.familyName}`,
-    //             password: bcrypt.hashSync(Math.random().toString(36).substring(7), 10),
-    //         });
-
-    //         if (!user) throw new HttpException(httpStatusCodes.INTERNAL_SERVER_ERROR, "User creation failed");
-    //     }
-
-    //     if (!AuthService.JWT_SECRET) throw new HttpException(httpStatusCodes.INTERNAL_SERVER_ERROR, "JWT Secret not configured");
-
-    //     const token = jwt.sign({ userId: user.id }, AuthService.JWT_SECRET, { expiresIn: '1h' });
-    //     return { token, user };
-    // }
-
-    // static async saveAppPassword(userId: number, appPassword: AppPasswordDTO): Promise<User> {
-    //     const user = await AuthRepository.findById(userId);
-
-    //     if (!user) throw new HttpException(httpStatusCodes.NOT_FOUND, `User with id ${userId} not found`);
-
-    //     // const hashedAppPassword = await bcrypt.hash(appPassword, 10);
-    //     const updatedUser = await AuthRepository.updateUser(userId, appPassword.appPassword);
-
-    //     if (!updatedUser) throw new HttpException(httpStatusCodes.INTERNAL_SERVER_ERROR, "Saving app password failed");
-
-    //     const mailService = new MailService()
-    //     mailService.configure(user.email, appPassword.appPassword)
-
-    //     return updatedUser;
-    // }
+    static async verifyCaptcha(token: string) {
+        const response = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                secret: '6Le4DXYqAAAAABOwobBd9qq7zrMjfmLnBGg19apR',
+                response: token,
+            }),
+        });
+        const data = await response.json();
+        console.log('CAPTCHA Verification Response:', data); // Log the entire response
+        return data.success; 
+    }
 }
 
 export default AuthService
