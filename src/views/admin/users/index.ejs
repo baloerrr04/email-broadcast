@@ -1,0 +1,42 @@
+<% if (locals.message) { %>
+  <script>
+      Swal.fire({
+          icon: '<%= locals.message.type === "success" ? "success" : "error" %>',
+          title: '<%= locals.message.text %>',
+          showConfirmButton: false,
+          timer: 2000,
+      });
+  </script>
+<% } %>
+
+<div class="row">
+  <div class="col-md-12">
+    <a class="btn btn-primary mb-2" href="/admin/users/create">Create</a>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Email</th>
+          <th scope="col">Role</th>
+          <th scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach((user, index) => { %>
+        <tr>
+          <td><%= index + 1 %></td>
+          <td><%= user.email %></td>
+          <td><%= user.role %></td>
+          <td class="d-flex gap-2">
+            <a class="btn btn-success" href="/admin/users/<%= user.id %>/edit">Edit</a>
+            <form id="deleteForm<%= user.id %>" action="/api/users/delete/<%= user.id %>?_method=DELETE" method="post">
+              <input type="hidden" name="_method" value="DELETE">
+              <button type="button" class="btn btn-danger" onclick="confirmDelete(<%= user.id %>)">Delete</button>
+            </form>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>

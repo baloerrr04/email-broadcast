@@ -1,0 +1,30 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Edit User</h4>
+              </div>
+            <div class="card-body">
+                <form action="/api/users/<%= user.id %>/update?_method=PUT" method="POST">
+                    <input type="hidden" name="_method" value="PUT">
+                    <div class="mb-2">
+                        <label class="form-label" for="email">Email:</label>
+                        <input type="email" id="email" name="email" class="form-control" value="<%= user.email %>" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" for="password">Password:</label>
+                        <input type="password" id="password" name="password" class="form-control">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" for="role">Role:</label>
+                        <select name="role" id="role" class="form-control" required>
+                            <option value="USER" <% if (user.role === 'USER') { %> selected <% } %>>User</option>
+                            <option value="ADMIN" <% if (user.role === 'ADMIN') { %> selected <% } %>>Admin</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Users</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
