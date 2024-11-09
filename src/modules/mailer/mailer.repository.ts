@@ -3,6 +3,7 @@ import { EmailData, EmailScheduleData, EmailWithSchedules } from '../../common/t
 import { prisma } from "../../config/database";
 
 class MailRepository {
+    
     static async addEmail(emailData: EmailData): Promise<EmailWithSchedules> {
         const email = await prisma.email.create({
             data: {
@@ -33,13 +34,9 @@ class MailRepository {
             scheduleDate: date,
         }));
 
-        console.log('Adding schedules:', schedules); // Debugging log
-
         await prisma.emailSchedule.createMany({
             data: schedules,
         });
-
-        console.log('Email schedules inserted:', schedules); // Add this line to debug
     }
 
     static async findEmailById(id: number): Promise<EmailWithSchedules | null> {
@@ -86,8 +83,6 @@ class MailRepository {
     
         return;
     }
-    
-
 
     static async updateEmail(emailId: number, emailData: EmailData): Promise<void> {
         await prisma.email.update({
