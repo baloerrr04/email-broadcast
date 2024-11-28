@@ -22,7 +22,7 @@ async function uploadToGemini(path: string, mimeType: string) {
 
 const model = genAI.getGenerativeModel({
     model: "gemini-1.5-pro",
-    systemInstruction: "subject and content output for one email template",
+    systemInstruction: "Generate an email template with a clear 'subject' and 'content'. The 'subject' should be wrapped only in an <h4> tag, and the 'content' should consist of HTML tags (such as <h4>, <p>, <ul>, etc.) to structure the email. Do not include any CSS styles or <html>, <head>, or <body> tags. Only use HTML tags for structuring the email content. Don't use '```' too. Don't include tag <img> too. Return both 'subject:' and 'content:' as separate",
 });
 
 const generationConfig = {
@@ -33,35 +33,46 @@ const generationConfig = {
     responseMimeType: "text/plain",
 };
 
-async function run(textPrompt: string) {
-    let files = [];
+async function generateGemini(textPrompt: string | null = null, imagePath: string | null = null) {
+    const files = [];
 
-    const imageData = await uploadToGemini("", "image/jpeg")
-
-    if (imageData) {
-        files.push(imageData)
+    // Upload the image if imagePath is provided
+    if (imagePath) {
+        const imageData = await uploadToGemini(imagePath, "image/jpeg");
+        if (imageData) {
+            files.push(imageData);
+        }
     }
 
+    const finalTextPrompt = textPrompt || (files.length > 0 ? "Buatkan email template dari gambar tersebut" : "");
+
+    const history = [];
+
+    if (files.length > 0) {
+        history.push({
+            role: "user",
+            parts: files.map((file) => ({
+                fileData: {
+                    mimeType: file.mimeType,
+                    fileUri: file.uri,
+                },
+            })),
+        });
+    }
+
+    if (finalTextPrompt) {
+        history.push();
+    }
 
     const chatSession = model.startChat({
         generationConfig,
-        history: files.length > 0 ? [
-            {
-                role: "user",
-                parts: [
-                    {
-                        fileData: {
-                            mimeType: files[0].mimeType,
-                            fileUri: files[0].uri,
-                        },
-                    },
-                ],
-            },
-        ] : [],
+        history,
     });
 
-    const result = await chatSession.sendMessage(textPrompt);
-    console.log(result.response.text());
+    const result = await chatSession.sendMessage(finalTextPrompt);
+
+    return result.response.text();
 }
 
-run("anjay");
+export default generateGemini;
+

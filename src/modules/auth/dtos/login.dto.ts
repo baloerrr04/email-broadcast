@@ -6,4 +6,7 @@ export class LoginDTO {
 
   @IsNotEmpty({ message: 'Password should not be empty' })
   password: string = '';
+
+  // @IsNotEmpty({ message: 'CAPTCHA token is required' }) // Tambahkan validasi untuk token CAPTCHA
+  // captcha: string = ''; // Properti baru untuk menyimpan token CAPTCHA
 }

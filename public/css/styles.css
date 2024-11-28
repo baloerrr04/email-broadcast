@@ -16966,3 +16966,47 @@ ul {
 .timeline-widget .timeline-item .timeline-badge.badge-primary {
   border: 2px solid #2952ff;
 }
+
+#chatContainer {
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-message {
+  padding: 10px;
+  border-radius: 5px;
+  max-width: 80%;
+  margin-bottom: 10px;
+}
+
+.chat-user {
+  background-color: #e1f5fe;
+  align-self: flex-end;
+}
+
+.chat-ai {
+  background-color: #e8e8e8;
+  align-self: flex-start;
+  margin-bottom: 10px;
+}
+
+.chat-subject {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.chat-content {
+  margin-top: 5px;
+  white-space: pre-wrap; /* Ensures line breaks are preserved */
+  font-family: "Courier New", monospace; /* Optional: To make content appear like code */
+}
+
+.chat-image {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 5px;
+}

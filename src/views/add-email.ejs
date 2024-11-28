@@ -112,8 +112,141 @@
             Send Email
           </button>
         </form>
+
+        <button 
+        type="button" 
+        style="
+        bottom: 20px;
+        right: 20px;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        z-index: 10;
+      " class="btn btn-primary d-flex justify-content-center align-items-center position-fixed" data-bs-toggle="modal" data-bs-target="#exampleModal">
+          <iconify-icon
+          icon="gridicons:scheduled"
+          class="fs-6"
+        ></iconify-icon>
+        </button>
+
       </div>
+
+      <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title fs-5" id="exampleModalLabel">Chat with AI</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <!-- Chat container -->
+              <div id="chatContainer" class="mb-3" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+                <!-- Messages will appear here -->
+              </div>
+      
+              <!-- Input for text prompt -->
+              <div class="mb-3">
+                <label for="textPrompt" class="form-label">Enter text prompt</label>
+                <input type="text" class="form-control" id="textPrompt" name="textPrompt" placeholder="Type your message" required>
+              </div>
+      
+              <!-- Upload image input -->
+              <div class="mb-3">
+                <label for="imageFile" class="form-label">Upload Image</label>
+                <input type="file" class="form-control" id="imageFile" name="file" accept="image/*">
+              </div>
+      
+              <button type="button" class="btn btn-primary w-100" onclick="sendMessage()">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
     </div>
   </div>
 </div>
 
+<script>
+  // Handle sending the chat message and image
+document.getElementById('templateForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    sendMessage();
+});
+
+async function sendMessage() {
+    const textPrompt = document.getElementById('textPrompt').value;
+    const imageFile = document.getElementById('imageFile').files[0];
+    
+    // Append form data
+    const formData = new FormData();
+    formData.append('textPrompt', textPrompt);
+    
+    if (imageFile) {
+        formData.append('file', imageFile);
+    }
+
+    // Append the message to the chat container (for instant chat feedback)
+    const chatContainer = document.getElementById('chatContainer');
+    const userMessage = document.createElement('div');
+    userMessage.classList.add('chat-message', 'chat-user');
+    userMessage.textContent = textPrompt;
+    chatContainer.appendChild(userMessage);
+
+    document.getElementById('textPrompt').value = '';
+    document.getElementById('imageFile').value = ''; // Clear the image file input
+
+    const waitingMessage = document.createElement('div');
+    waitingMessage.setAttribute("id", ".chat-waiting")
+    waitingMessage.classList.add('chat-message', 'chat-ai');
+    waitingMessage.textContent = 'Please wait...';
+    chatContainer.appendChild(waitingMessage);
+    
+    if (imageFile) {
+        const imageMessage = document.createElement('div');
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(imageFile);
+        img.classList.add('img-fluid', 'chat-image');
+        imageMessage.appendChild(img);
+        chatContainer.appendChild(imageMessage);
+    }
+    
+    // Scroll to bottom
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    // Send data to server
+    try {
+        const response = await fetch('/api/generate-email-template', {
+            method: 'POST',
+            body: formData,
+        });
+
+        const result = await response.json();
+        const messageDiv = document.getElementById('responseMessage');
+
+        const waitingMessages = document.getElementById('.chat-waiting');
+        waitingMessages.parentNode.removeChild(waitingMessage)
+        
+        if (response.ok) {
+            // Show AI response in chat container
+            const aiMessage = document.createElement('div');
+            aiMessage.classList.add('chat-message', 'chat-ai');
+            aiMessage.innerHTML = result.message; // Assuming server returns the generated message
+            chatContainer.appendChild(aiMessage);
+            
+            // Scroll to bottom after new message
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        } else {
+            messageDiv.classList.remove('d-none', 'alert-success');
+            messageDiv.classList.add('alert-danger');
+            messageDiv.innerHTML = result.error || 'An error occurred while generating the template.';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        const messageDiv = document.getElementById('responseMessage');
+        messageDiv.classList.remove('d-none', 'alert-success');
+        messageDiv.classList.add('alert-danger');
+        messageDiv.textContent = 'Failed to generate email template due to a network error.';
+    }
+}
+</script>

@@ -10,8 +10,11 @@ import MailRepository from './mailer.repository';
 import * as Cheerio from 'cheerio';
 import axios from 'axios';
 import HttpStatusCodes from '../../common/constants/http-status-codes';
+import generateGemini from '../../common/libs/geminiService';
 
 class MailController {
+
+    static scheduledJobs: { [key: string]: cron.ScheduledTask[] } = {};
 
     static async sendEmail(req: Request, res: Response) {
         try {
@@ -101,10 +104,15 @@ class MailController {
 
                     const cronFormat = `${scheduleDateTime.minutes()} ${scheduleDateTime.hours()} ${scheduleDateTime.date()} ${scheduleDateTime.month() + 1} *`;
 
-                    cron.schedule(cronFormat, async () => {
+                    const job = cron.schedule(cronFormat, async () => {
                         await mailService.sendMail(user.email, to.split(','), cc?.split(',') || [], bcc?.split(',') || [], subject, updatedContent, attachments);
                         await MailRepository.updateEmailStatus(email.id, "Terkirim");
                     });
+
+                    if (!MailController.scheduledJobs[email.id]) {
+                        MailController.scheduledJobs[email.id] = [];
+                    }
+                    MailController.scheduledJobs[email.id].push(job);
                 }
 
                 await MailRepository.addEmailSchedule(email.id, schedulesDB);
@@ -128,6 +136,46 @@ class MailController {
             throw new HttpException(HttpStatusCodes.BAD_REQUEST, error.message)
         }
     }
+
+    static async generateEmailTemplate(req: Request, res: Response) {
+        try {
+            const textPrompt = req.body.textPrompt || null;
+            const imagePath = req.file ? req.file.path : null;
+    
+            const response = await generateGemini(textPrompt, imagePath);
+
+            console.log(response);
+            
+    
+            res.status(200).json({ message: response });
+        } catch (error) {
+            console.error('Error generating email template:', error);
+            res.status(500).json({ error: 'Failed to generate email template.' });
+        }
+    };
+
+    static async cancelScheduledEmail(req: Request, res: Response) {
+        try {
+            const emailId = req.params.id;
+            
+            if (!MailController.scheduledJobs[emailId]) {
+                return res.status(404).json({ message: 'Scheduled email not found or already sent.' });
+            }
+            
+            // Batalkan pekerjaan yang dijadwalkan
+            MailController.scheduledJobs[emailId].forEach(job => job.stop());
+            delete MailController.scheduledJobs[emailId];
+
+    
+            await MailRepository.updateEmailStatus(parseInt(emailId), "Dibatalkan");
+    
+            res.status(200).json({ message: 'Scheduled email canceled successfully.' });
+        } catch (error) {
+            console.error('Error canceling scheduled email:', error);
+            res.status(500).json({ error: 'Failed to cancel scheduled email.' });
+        }
+    }
+    
 }
 
 export default MailController;

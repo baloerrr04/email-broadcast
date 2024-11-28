@@ -98,6 +98,10 @@
                     <iconify-icon icon="material-symbols:delete-outline" class="fs-6 text-danger link-danger"></iconify-icon>
                   </button>
                 </form>
+
+                <form action="/api/cancel-scheduled-email/<%= email.id %>" method="POST" style="display: inline;">
+                  <button type="submit" class="btn btn-danger">Cancel</button>
+              </form>
               </div>
             </div>
           </div>
